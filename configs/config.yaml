@@ -2,6 +2,13 @@ data:
   raw_path: data/raw/synthetic_finance_20250901.csv
   processed_path: data/processed/cleaned_finance_20250901.csv
 
+project:
+  seed: 42
+
+sample_data:
+  output_path: tests/data/sample.csv
+  rows: 50
+
 targets:
   classification: credit_risk
   regression: fraud_risk_score

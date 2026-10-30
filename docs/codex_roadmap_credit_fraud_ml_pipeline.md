@@ -2,7 +2,7 @@
 
 ## Bối cảnh
 
-- Dataset: bảng khách hàng ngân hàng **tổng hợp (synthetic)**, 750.000 dòng, 23 cột (xem `docs/data_dictionary.md`).
+- Dataset: bảng khách hàng ngân hàng **tổng hợp (synthetic)**, 750.000 dòng, 23 cột (xem `docs/finance_dictionary.md`).
 - **Task A**: `credit_risk`, phân loại 4 lớp có thứ tự (0 đến 3). Metric chính: QWK, macro-F1.
 - **Task B**: `fraud_risk_score`, hồi quy. Metric chính: RMSE, MAE.
 - Môi trường: **Python 3.13**.
