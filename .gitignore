@@ -1,0 +1,282 @@
+# =============================================================================
+# CREDIT FRAUD ML PIPELINE — .gitignore
+# =============================================================================
+
+# =============================================================================
+# PYTHON
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+*.pyo
+
+# Distribution / packaging
+.Python
+build/
+dist/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+htmlcov/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.conda/
+*.conda
+
+# pyenv
+.python-version
+
+# PEP 517 / pyproject
+pip-wheel-metadata/
+
+# mypy / type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+
+# Ruff / linting cache
+.ruff_cache/
+
+# =============================================================================
+# ENVIRONMENT & SECRETS
+# =============================================================================
+.env
+.env.*
+!.env.example       # giữ lại file mẫu
+*.pem
+*.key
+*.secret
+secrets/
+credentials/
+credentials.json
+service_account.json
+
+# =============================================================================
+# DATA — không commit dữ liệu thô / interim / processed
+# =============================================================================
+data/raw/*
+data/interim/*
+data/processed/*
+data/features/*
+
+# Giữ lại placeholder để Git track thư mục rỗng
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+!data/features/.gitkeep
+
+# Common data formats
+*.csv
+*.tsv
+*.parquet
+*.feather
+*.arrow
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.joblib
+*.db
+*.sqlite
+*.sqlite3
+*.json.gz
+*.csv.gz
+*.zip
+*.tar
+*.tar.gz
+*.tar.bz2
+*.7z
+*.rar
+
+# =============================================================================
+# JUPYTER NOTEBOOKS — output & checkpoints
+# =============================================================================
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Xóa cell output trước khi commit (dùng nbstripout hoặc pre-commit)
+# File .ipynb được giữ lại nhưng nên strip output
+
+# =============================================================================
+# MODELS — artifact mô hình không commit (dùng MLflow / DVC / S3)
+# =============================================================================
+models/credit_risk/*/
+models/fraud_risk/*/
+*.pt
+*.pth
+*.onnx
+*.h5
+*.keras
+*.pb
+*.tflite
+*.bin
+*.safetensors
+
+# =============================================================================
+# MLFLOW — tracking server local
+# =============================================================================
+mlruns/
+mlartifacts/
+.mlflow/
+
+# =============================================================================
+# DVC (nếu dùng)
+# =============================================================================
+.dvc/cache/
+.dvc/tmp/
+*.dvc.lock
+
+# =============================================================================
+# REPORTS — output được generate tự động
+# =============================================================================
+reports/figures/*
+reports/*.html
+reports/*.pdf
+reports/*.png
+reports/*.svg
+
+!reports/figures/.gitkeep
+
+# =============================================================================
+# LOGS
+# =============================================================================
+logs/
+*.log
+*.log.*
+log/
+
+# =============================================================================
+# DOCKER
+# =============================================================================
+# Không ignore Dockerfile (cần commit), chỉ ignore runtime artifacts
+docker-compose.override.yml
+
+# =============================================================================
+# IDE & EDITORS
+# =============================================================================
+# VSCode
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
+
+# PyCharm / JetBrains
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim / Emacs
+*.swp
+*.swo
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Spyder
+.spyderproject.cfg
+.spyproject
+
+# =============================================================================
+# OS GENERATED
+# =============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+
+# =============================================================================
+# TEMPORARY & CACHE
+# =============================================================================
+tmp/
+temp/
+.tmp/
+*.tmp
+*.bak
+*.orig
+*.rej
+
+# Profiling
+*.prof
+*.lprof
+
+# =============================================================================
+# DOCUMENTATION BUILD (nếu dùng Sphinx/MkDocs)
+# =============================================================================
+docs/_build/
+docs/site/
+site/
+
+# =============================================================================
+# NODE (nếu có frontend/dashboard)
+# =============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =============================================================================
+# MISC
+# =============================================================================
+# Scratch / experiments không muốn commit
+scratch/
+sandbox/
+experiments/
+*.scratch.py
+

@@ -1,0 +1,7 @@
+data:
+  raw_path: data/raw/synthetic_finance_20250901.csv
+  processed_path: data/processed/cleaned_finance_20250901.csv
+
+targets:
+  classification: credit_risk
+  regression: fraud_risk_score
