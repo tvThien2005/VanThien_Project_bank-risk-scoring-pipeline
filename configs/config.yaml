@@ -14,6 +14,16 @@ data_quality:
   report_path: reports/data_quality_report.html
   income_bins: [0, 50000, 100000, 150000]
 
+splits:
+  train_size: 0.70
+  valid_size: 0.15
+  test_size: 0.15
+  stratify_column: credit_risk
+  id_paths:
+    train: data/processed/train_ids.npy
+    valid: data/processed/valid_ids.npy
+    test: data/processed/test_ids.npy
+
 targets:
   classification: credit_risk
   regression: fraud_risk_score

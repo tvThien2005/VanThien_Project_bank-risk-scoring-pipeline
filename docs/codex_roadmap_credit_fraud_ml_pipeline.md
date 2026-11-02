@@ -185,6 +185,17 @@ credit-fraud-ml-pipeline/
 - `src/models/train_fraud.py`: Dummy (mean) và Ridge; huấn luyện trên train, đánh giá trên valid; log MLflow.
 - `src/models/evaluate.py`: `evaluate_classification`, `evaluate_regression` trả về dict metric và xuất HTML report (có banner synthetic).
 
+### Quy ước log MLflow (áp dụng cho mọi giai đoạn)
+
+| Log vào MLflow                                                                                  | Không log                                                                    |
+| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `params`: hyperparameter, config hash, seed, git commit                                         | Toàn bộ file config                                                          |
+| `metrics`: QWK, macro-F1, RMSE, MAE, per-class recall, precision/recall@top-k                   | Metric từng dòng                                                             |
+| `tags`: `split=train/valid/test`, `variant=no_sensitive`, `model=lightgbm`                      | —                                                                            |
+| `artifacts`: model `.txt` (< 50MB), confusion matrix PNG, SHAP summary PNG, `test_metrics.json` | Preprocessor joblib nếu > 100MB; SHAP values thô (lưu `reports/`, không log) |
+
+Trước khi log artifact, kiểm tra kích thước; nếu > 50MB thì log đường dẫn trong `tags` thay vì upload file.
+
 ### Điều kiện hoàn thành
 
 - Có bảng kết quả baseline trên valid.
@@ -210,6 +221,12 @@ Không dùng k-fold. Huấn luyện trên **train**, chọn tham số và early 
 - Đánh giá theo phân khúc (`employment_status`, `age_bin`, `income_bin`) trên valid.
 - Đánh giá trên test **đúng một lần** khi chốt model: lệnh `python -m scripts.run_training --final` ghi `test_metrics.json`; nếu file đã tồn tại thì từ chối chạy lại trừ khi có `--force`.
 
+### Ghi chú quan trọng
+
+- **`customer_id`**: phải **giữ** trong DataFrame ở mọi bước từ `load` đến `predict` để join prediction với ID. Chỉ loại `customer_id` khỏi **ma trận feature X** (đã ghi ở Giai đoạn 4). Không được xóa cột khỏi DataFrame gốc.
+- **Optuna timeout**: `timeout=1800` là giới hạn **cho cả study**, không phải mỗi trial. Nếu 50 trials xong trước 30 phút thì study dừng sớm (đúng). Nếu chưa, dừng ở 30 phút. Early stopping của LightGBM dùng valid.
+- **Cờ `--force`**: chỉ dùng khi đã sửa bug pipeline và muốn đánh giá lại trên test. Nếu `test_metrics.json` đã tồn tại và không có `--force` → script phải từ chối chạy với message rõ ràng: "test đã được đánh giá, dùng --force nếu thực sự cần đánh giá lại". Điều này ngăn test bị dùng nhiều lần.
+
 ### Điều kiện hoàn thành
 
 - Model chính thắng baseline có ý nghĩa trên valid.
@@ -228,6 +245,7 @@ Không dùng k-fold. Huấn luyện trên **train**, chọn tham số và early 
   - Fraud: `top_k_threshold(scores, k=0.05)`: ngưỡng điểm tại phân vị 95% của điểm dự đoán trên valid, kèm precision/recall tại top-k theo định nghĩa ở giai đoạn 5.
 - `src/explainability/shap_explain.py`: SHAP `TreeExplainer`, summary toàn cục và waterfall cho vài ca; **tính trên mẫu tối đa 10.000 dòng** để chạy nhanh.
 - `src/evaluation/fairness.py`: `compute_fairness_metrics(y_true, y_pred, sensitive_cols)` dùng `fairlearn.MetricFrame`; nhóm theo `age_bin`, `marital_status`, `region`, `education_level`; so sánh model huấn luyện **có và không có** tuổi và hôn nhân (huấn luyện lại bằng `features.exclude`, lưu vào `models/<task>/experiments/no_sensitive/`).
+  - **Lưu ý về retrain fairness:** khi huấn luyện lại model `no_sensitive` (bỏ tuổi và hôn nhân), **không chạy lại Optuna**. Dùng hyperparameter tốt nhất từ Giai đoạn 6, chỉ thay đổi `features.exclude` trong config, huấn luyện lại một lần trên train và log vào MLflow với tag `variant=no_sensitive`. Mục đích là so sánh fairness, không phải tối ưu lại.
 - `scripts/run_fairness_report.py`: xuất `reports/fairness_report.html` (có banner synthetic).
 
 ### Điều kiện hoàn thành
@@ -258,6 +276,8 @@ Không dùng k-fold. Huấn luyện trên **train**, chọn tham số và early 
   - `python -m scripts.run_eda`
   - `uvicorn api.app:app --reload`
 - `tests/integration/test_training_pipeline.py`, `tests/integration/test_inference_pipeline.py`: chạy trên `sample.csv`.
+  - `mlflow ui --backend-store-uri ./mlruns` — mở http://localhost:5000 để xem experiment (ghi chú: lệnh này cần MLflow cài từ `requirements.txt`).
+  - `pip freeze | grep -Ei '^(numpy|pandas|scipy|scikit-learn|pyarrow|lightgbm|optuna|mlflow|shap|fairlearn|pyyaml|joblib|matplotlib|seaborn|pytest|httpx|ruff|fastapi|uvicorn|pydantic)==' > requirements.txt` — pin lại sau khi cài xong (chạy trong venv đã activate, từ gốc repo).
 
 ### Điều kiện hoàn thành
 
@@ -271,7 +291,11 @@ Không dùng k-fold. Huấn luyện trên **train**, chọn tham số và early 
 
 ### Code cần viết
 
-- `api/__init__.py`, `api/schemas.py`: `CustomerFeatures` (Pydantic, các cột thô cần thiết; miền hợp lệ lấy từ cùng nguồn với `data_quality.yaml`), `CreditPrediction` (lớp và xác suất), `FraudPrediction` (điểm và cờ).
+- `src/data/validity_rules.py` (tạo ở Giai đoạn 2 hoặc 9, đặt ở `src/data/` để cả validate lẫn api dùng chung):
+  - `COLUMN_RANGES: dict[str, tuple[float, float]]` — miền hợp lệ từng cột số, đọc từ `docs/finance_dictionary.md`.
+  - `CATEGORICAL_VALUES: dict[str, list[str]]` — giá trị hợp lệ từng cột phân loại.
+  - Đây là **single source of truth**. `validate.py` đọc YAML rules (linh hoạt) nhưng assert rằng YAML rules khớp với `validity_rules.py`; `api/schemas.py` import trực tiếp từ đây để tạo `conint(ge=..., le=...)` và `Literal[...]`. Cả hai fail cùng lúc nếu không khớp, tránh drift.
+- `api/__init__.py`, `api/schemas.py`: `CustomerFeatures` (Pydantic, các cột thô cần thiết, dùng `COLUMN_RANGES` và `CATEGORICAL_VALUES` từ `src/data/validity_rules.py`), `CreditPrediction` (lớp và xác suất), `FraudPrediction` (điểm và cờ).
 - `api/app.py`: FastAPI với `/health`, `/predict/credit`, `/predict/fraud`, `/predict/both`; nạp model bundle một lần khi khởi động từ thư mục chỉ định bởi biến môi trường `MODEL_DIR` (mặc định `models/`). Nếu chưa có model thì khởi động được nhưng `/health` báo `model_not_loaded` và `/predict/*` trả lỗi rõ ràng.
 - `.dockerignore` (ở gốc repo): loại `data/`, `models/`, `mlruns/`, `reports/`, `notebooks/`, `tests/`, `.git/`, `.venv/`.
 - `docker/Dockerfile.api`: multi-stage, `python:3.13-slim`, cài `libgomp1` (LightGBM cần). **Image chỉ chứa code chính**: `src/`, `api/`, `configs/` và `requirements.txt`. **Không chứa model, data, báo cáo hay notebook.**
