@@ -9,6 +9,11 @@ sample_data:
   output_path: tests/data/sample.csv
   rows: 50
 
+data_quality:
+  config_path: configs/data_quality.yaml
+  report_path: reports/data_quality_report.html
+  income_bins: [0, 50000, 100000, 150000]
+
 targets:
   classification: credit_risk
   regression: fraud_risk_score

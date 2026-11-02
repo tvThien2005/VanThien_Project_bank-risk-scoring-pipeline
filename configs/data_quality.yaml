@@ -1,0 +1,133 @@
+rules:
+  - name: customer_id_format
+    column: customer_id
+    rule: regex
+    pattern: '^FN\d{7}$'
+    action: to_nan
+
+  - name: age_range
+    column: age
+    rule: in_range
+    min: 18
+    max: 100
+    action: to_nan
+
+  - name: income_nonnegative
+    column: income
+    rule: in_range
+    min: 0
+    action: to_nan
+
+  - name: credit_score_range
+    column: credit_score
+    rule: in_range
+    min: 300
+    max: 850
+    action: to_nan
+
+  - name: employment_years_nonnegative
+    column: employment_years
+    rule: in_range
+    min: 0
+    action: to_nan
+
+  - name: account_age_nonnegative
+    column: account_age_months
+    rule: in_range
+    min: 0
+    action: to_nan
+
+  - name: monthly_spending_nonnegative
+    column: monthly_spending
+    rule: in_range
+    min: 0
+    action: to_nan
+
+  - name: credit_utilization_range
+    column: credit_utilization
+    rule: in_range
+    min: 0
+    max: 1
+    action: to_nan
+
+  - name: num_credit_cards_nonnegative
+    column: num_credit_cards
+    rule: in_range
+    min: 0
+    action: to_nan
+
+  - name: num_loans_nonnegative
+    column: num_loans
+    rule: in_range
+    min: 0
+    action: to_nan
+
+  - name: late_payment_months_range
+    column: late_payment_months
+    rule: in_range
+    min: 0
+    max: 24
+    action: to_nan
+
+  - name: debt_to_income_nonnegative
+    column: debt_to_income
+    rule: in_range
+    min: 0
+    action: to_nan
+
+  - name: savings_rate_range
+    column: savings_rate
+    rule: in_range
+    min: 0
+    max: 1
+    action: to_nan
+
+  - name: investment_value_nonnegative
+    column: investment_value
+    rule: in_range
+    min: 0
+    action: to_nan
+
+  - name: credit_risk_range
+    column: credit_risk
+    rule: in_range
+    min: 0
+    max: 3
+    action: to_nan
+
+  - name: transaction_after_account_creation
+    column: last_transaction_date
+    rule: relation
+    other_column: account_creation_date
+    operator: gte
+    action: to_nan
+
+  - name: employment_years_outlier
+    column: employment_years
+    rule: in_range
+    max: 50
+    action: flag
+
+  - name: high_income_outlier
+    column: income
+    rule: in_range
+    max: 250000
+    action: flag
+
+  - name: high_monthly_spending_outlier
+    column: monthly_spending
+    rule: in_range
+    max: 10000
+    action: flag
+
+  - name: many_credit_cards_outlier
+    column: num_credit_cards
+    rule: in_range
+    max: 10
+    action: flag
+
+  - name: high_investment_value_outlier
+    column: investment_value
+    rule: in_range
+    max: 1000000
+    action: flag
