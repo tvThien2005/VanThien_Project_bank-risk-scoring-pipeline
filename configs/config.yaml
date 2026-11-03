@@ -24,6 +24,17 @@ splits:
     valid: data/processed/valid_ids.npy
     test: data/processed/test_ids.npy
 
+features:
+  reference_date: 2025-01-01
+  age_bins: [0, 25, 35, 45, 55, 65, .inf]
+  income_bins: [0, 50000, 100000, 150000, 250000, .inf]
+  skew_threshold: 1.0
+  exclude: []
+  education_order: [High School, Some College, Bachelor, Master, PhD]
+  output_dir: data/features
+  preprocessor_path: data/features/preprocessor.joblib
+  train_target_correlation_path: data/features/train_target_correlations.parquet
+
 targets:
   classification: credit_risk
   regression: fraud_risk_score
