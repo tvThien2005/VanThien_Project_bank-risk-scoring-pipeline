@@ -1,0 +1,24 @@
+task: credit_risk
+primary_metric: qwk
+
+models:
+  dummy:
+    strategy: most_frequent
+  logistic_regression:
+    class_weight: balanced
+    max_iter: 1000
+    solver: lbfgs
+    C: 1.0
+
+optuna:
+  n_trials: 50
+  timeout_seconds: 1800
+  direction: maximize
+
+mlflow:
+  tracking_uri: mlruns
+  experiment_name: credit_risk_baseline
+
+reports:
+  dummy: reports/credit_baseline_dummy.html
+  logistic_regression: reports/credit_baseline_logistic_regression.html

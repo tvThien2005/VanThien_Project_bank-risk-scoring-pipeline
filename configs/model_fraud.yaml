@@ -1,0 +1,24 @@
+task: fraud_risk_score
+primary_metric: rmse
+
+models:
+  dummy:
+    strategy: mean
+  ridge:
+    alpha: 1.0
+
+optuna:
+  n_trials: 50
+  timeout_seconds: 1800
+  direction: minimize
+
+evaluation:
+  top_k: 0.05
+
+mlflow:
+  tracking_uri: mlruns
+  experiment_name: fraud_risk_baseline
+
+reports:
+  dummy: reports/fraud_baseline_dummy.html
+  ridge: reports/fraud_baseline_ridge.html

@@ -35,6 +35,13 @@ features:
   preprocessor_path: data/features/preprocessor.joblib
   train_target_correlation_path: data/features/train_target_correlations.parquet
 
+models:
+  credit_config_path: configs/model_credit.yaml
+  fraud_config_path: configs/model_fraud.yaml
+
+baselines:
+  summary_report_path: reports/baseline_summary.html
+
 targets:
   classification: credit_risk
   regression: fraud_risk_score
