@@ -31,3 +31,7 @@ ruff check src/ scripts/ tests/
 ```
 
 Các lệnh training, đánh giá và API sẽ được bổ sung ở các giai đoạn sau.
+
+## Công bằng và biến nhạy cảm
+
+Mô hình credit dùng `age`, `age_bin` và `marital_status` trong phiên bản mặc định. Đây chỉ là dữ liệu synthetic và không phải khuyến nghị sử dụng các biến này để ra quyết định tín dụng thực tế. Chạy `python -m scripts.run_fairness_report` để so sánh validation với biến thể `no_sensitive`, vốn loại ba cột này và dùng nguyên hyperparameter đã chọn, không tune lại.

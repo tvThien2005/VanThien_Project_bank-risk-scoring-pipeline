@@ -134,3 +134,52 @@ def evaluate_regression(
         )
         write_html_report(html, report_path)
     return metrics
+
+
+def evaluate_by_segment(
+    y_true: Sequence[int] | Sequence[float],
+    y_pred: Sequence[int] | Sequence[float],
+    segments: pd.DataFrame,
+    *,
+    task: str,
+    top_k: float | None = None,
+    report_path: str | Path | None = None,
+) -> pd.DataFrame:
+    """Compute validation metrics independently for each configured customer segment."""
+    if len(y_true) != len(y_pred) or len(y_true) != len(segments):
+        raise ValueError("Segment frame and prediction arrays must have equal row counts.")
+    if task not in {"credit_risk", "fraud_risk_score"}:
+        raise ValueError("task must be credit_risk or fraud_risk_score.")
+    if task == "fraud_risk_score" and top_k is None:
+        raise ValueError("top_k is required for fraud segment evaluation.")
+    true_series = pd.Series(y_true, index=segments.index)
+    prediction_series = pd.Series(y_pred, index=segments.index)
+    rows: list[dict[str, Any]] = []
+    for segment_name in segments.columns:
+        grouped = segments[segment_name].astype("string").fillna("<missing>")
+        for value, indexes in grouped.groupby(grouped, observed=True).groups.items():
+            actual = true_series.loc[indexes]
+            predicted = prediction_series.loc[indexes]
+            metrics = (
+                evaluate_classification(actual, predicted)
+                if task == "credit_risk"
+                else evaluate_regression(actual, predicted, top_k=float(top_k))
+            )
+            rows.append(
+                {
+                    "segment": segment_name,
+                    "value": value,
+                    "rows": len(indexes),
+                    **{key: metric for key, metric in metrics.items() if key != "confusion_matrix"},
+                }
+            )
+    result = pd.DataFrame(rows)
+    if report_path is not None:
+        write_html_report(
+            build_html_report(
+                f"Đánh giá theo phân khúc — {task}",
+                [("Validation segment metrics", result.to_html(index=False, float_format=lambda value: f"{value:.6f}"))],
+            ),
+            report_path,
+        )
+    return result

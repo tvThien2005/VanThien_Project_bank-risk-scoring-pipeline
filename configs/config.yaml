@@ -31,6 +31,9 @@ features:
   skew_threshold: 1.0
   exclude: []
   education_order: [High School, Some College, Bachelor, Master, PhD]
+  # Set false to regenerate the baseline feature matrix without these four candidates.
+  credit_risk_experiment:
+    enabled: false
   output_dir: data/features
   preprocessor_path: data/features/preprocessor.joblib
   train_target_correlation_path: data/features/train_target_correlations.parquet
@@ -41,6 +44,23 @@ models:
 
 baselines:
   summary_report_path: reports/baseline_summary.html
+
+training:
+  segment_columns: [employment_status, age_bin, income_bin]
+  max_mlflow_artifact_bytes: 52428800
+
+governance:
+  credit_high_risk_class: 2
+  threshold_candidate_quantiles: 201
+  shap_sample_size: 10000
+  shap_waterfall_cases: 3
+  sensitive_columns: [age_bin, marital_status, region, education_level]
+  no_sensitive_exclude: [age, age_bin, marital_status]
+  reports:
+    thresholds: reports/threshold_report.html
+    fairness: reports/fairness_report.html
+    credit_shap: reports/credit_shap_report.html
+    fraud_shap: reports/fraud_shap_report.html
 
 targets:
   classification: credit_risk

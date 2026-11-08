@@ -6,7 +6,7 @@
 .mlflow/
 /reports/*.html
 /reports/figures/
-
+/notebooks/reports/*.html
 # Local environments and secrets
 .env
 .venv/

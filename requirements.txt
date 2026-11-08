@@ -4,6 +4,7 @@ scipy==1.18.1
 scikit-learn==1.9.1
 pyarrow==25.0.1
 lightgbm==4.7.0
+xgboost==3.4.1
 optuna==5.0.0
 mlflow==3.17.2
 shap==0.54.1

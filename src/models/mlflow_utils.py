@@ -7,6 +7,7 @@ import json
 import os
 import subprocess
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
 from src.utils.logger import get_logger
@@ -67,3 +68,50 @@ def log_baseline_run(
         mlflow.log_params(safe_params)
         mlflow.log_metrics(scalar_metrics)
     LOGGER.info("Logged baseline %s to MLflow experiment %s", model_name, experiment_name)
+
+
+def log_model_run(
+    *,
+    config: Mapping[str, Any],
+    model_name: str,
+    model_params: Mapping[str, Any],
+    metrics: Mapping[str, Any],
+    seed: int,
+    artifact_paths: Mapping[str, str | Path],
+    max_artifact_bytes: int,
+    variant: str = "default",
+) -> None:
+    """Log a main-model validation run and upload only artifacts within the size limit."""
+    import mlflow
+
+    mlflow_settings = config.get("mlflow")
+    if not isinstance(mlflow_settings, Mapping):
+        raise TypeError("model configuration mlflow must be a mapping.")
+    tracking_uri = mlflow_settings.get("tracking_uri")
+    experiment_name = mlflow_settings.get("experiment_name")
+    if not isinstance(tracking_uri, str) or not isinstance(experiment_name, str):
+        raise TypeError("model configuration mlflow needs tracking_uri and experiment_name strings.")
+    os.environ.setdefault("MLFLOW_ALLOW_FILE_STORE", "true")
+    mlflow.set_tracking_uri(tracking_uri)
+    mlflow.set_experiment(experiment_name)
+    scalar_metrics = {
+        name: float(value)
+        for name, value in metrics.items()
+        if isinstance(value, (int, float)) and name != "top_k_count"
+    }
+    safe_params = {name: str(value) for name, value in model_params.items()}
+    safe_params.update({"config_hash": config_hash(config), "seed": str(seed)})
+    with mlflow.start_run(run_name=model_name):
+        mlflow.set_tags({"split": "train/valid", "variant": variant, "model": model_name})
+        mlflow.set_tag("git_commit", current_git_commit())
+        mlflow.log_params(safe_params)
+        mlflow.log_metrics(scalar_metrics)
+        for artifact_name, artifact_path in artifact_paths.items():
+            path = Path(artifact_path)
+            if not path.is_file():
+                raise FileNotFoundError(f"MLflow artifact does not exist: {path}")
+            if path.stat().st_size <= max_artifact_bytes:
+                mlflow.log_artifact(str(path))
+            else:
+                mlflow.set_tag(f"artifact_{artifact_name}_path", str(path))
+    LOGGER.info("Logged main model %s to MLflow experiment %s", model_name, experiment_name)

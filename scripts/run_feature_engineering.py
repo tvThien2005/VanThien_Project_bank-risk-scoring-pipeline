@@ -12,7 +12,9 @@ from src.data.clean import add_missing_flags, apply_entry_error_rules, handle_ou
 from src.data.load import load_raw
 from src.data.split import make_splits
 from src.data.validate import load_data_quality_config
-from src.features.build_features import add_bins, add_date_features, add_ratio_features
+from src.features.build_features import (
+    build_stateless_features,
+)
 from src.features.feature_selection import target_correlations_on_train
 from src.features.preprocess import (
     build_preprocessor,
@@ -50,9 +52,19 @@ def _feature_settings(config: Mapping[str, Any]) -> Mapping[str, Any]:
 
 def _build_features(df: pd.DataFrame, settings: Mapping[str, Any]) -> pd.DataFrame:
     """Apply only stateless date, ratio, and bin feature transformations."""
-    featured = add_date_features(df, settings["reference_date"])
-    featured = add_ratio_features(featured)
-    return add_bins(featured, settings["age_bins"], settings["income_bins"])
+    experiment = settings.get("credit_risk_experiment", {})
+    if not isinstance(experiment, Mapping):
+        raise TypeError("features.credit_risk_experiment must be a mapping.")
+    enabled = experiment.get("enabled", False)
+    if not isinstance(enabled, bool):
+        raise TypeError("features.credit_risk_experiment.enabled must be a boolean.")
+    return build_stateless_features(
+        df,
+        reference_date=settings["reference_date"],
+        age_bins=settings["age_bins"],
+        income_bins=settings["income_bins"],
+        credit_risk_experiment_enabled=enabled,
+    )
 
 
 def _write_split_artifacts(

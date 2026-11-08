@@ -7,7 +7,12 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 
-from src.features.build_features import add_bins, add_date_features, add_ratio_features
+from src.features.build_features import (
+    add_bins,
+    add_credit_risk_experiment_features,
+    add_date_features,
+    add_ratio_features,
+)
 from src.features.feature_selection import (
     correlation_filter,
     permutation_importance_on_train,
@@ -70,6 +75,10 @@ def test_stateless_date_ratio_and_bin_features() -> None:
             "investment_value": [60_000.0],
             "num_loans": [2],
             "num_credit_cards": [0],
+            "late_payment_months": [6],
+            "account_age_months": [0],
+            "credit_utilization": [0.5],
+            "debt_to_income": [0.4],
             "age": [30],
         }
     )
@@ -87,6 +96,30 @@ def test_stateless_date_ratio_and_bin_features() -> None:
     assert pd.isna(featured.loc[0, "loans_per_card"])
     assert isinstance(featured["age_bin"].dtype, pd.CategoricalDtype)
     assert isinstance(featured["income_bin"].dtype, pd.CategoricalDtype)
+
+
+def test_credit_risk_experiment_features_are_optional_and_safe() -> None:
+    """Build optional credit-behaviour interactions without dividing by zero."""
+    frame = pd.DataFrame(
+        {
+            "late_payment_months": [6.0, 2.0],
+            "account_age_months": [24.0, 0.0],
+            "credit_utilization": [0.5, 0.8],
+            "num_credit_cards": [2.0, 0.0],
+            "debt_to_income": [0.4, 0.3],
+        }
+    )
+
+    featured = add_credit_risk_experiment_features(frame, enabled=True)
+    disabled = add_credit_risk_experiment_features(frame, enabled=False)
+
+    assert featured.loc[0, "late_payment_rate"] == 0.25
+    assert featured.loc[0, "utilization_per_card"] == 0.25
+    assert featured.loc[0, "debt_utilization_interaction"] == 0.2
+    assert featured.loc[0, "payment_credit_interaction"] == 3.0
+    assert pd.isna(featured.loc[1, "late_payment_rate"])
+    assert pd.isna(featured.loc[1, "utilization_per_card"])
+    assert set(disabled.columns) == set(frame.columns)
 
 
 def test_preprocessor_is_train_fitted_excludes_leakage_and_round_trips(tmp_path: Path) -> None:

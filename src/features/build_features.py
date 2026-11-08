@@ -40,6 +40,47 @@ def add_ratio_features(df: pd.DataFrame) -> pd.DataFrame:
     return featured
 
 
+def add_credit_risk_experiment_features(df: pd.DataFrame, *, enabled: bool) -> pd.DataFrame:
+    """Add optional, row-local credit-behaviour features with safe denominators.
+
+    These features use only fields known at prediction time.  Keeping them behind
+    one configuration switch makes the baseline and experimental feature sets
+    directly comparable.
+    """
+    if not enabled:
+        return df.copy()
+    featured = df.copy()
+    late_payment_months = pd.to_numeric(featured["late_payment_months"], errors="coerce")
+    account_age_months = pd.to_numeric(featured["account_age_months"], errors="coerce")
+    credit_utilization = pd.to_numeric(featured["credit_utilization"], errors="coerce")
+    debt_to_income = pd.to_numeric(featured["debt_to_income"], errors="coerce")
+
+    featured["late_payment_rate"] = _safe_divide(late_payment_months, account_age_months)
+    featured["utilization_per_card"] = _safe_divide(
+        credit_utilization, featured["num_credit_cards"]
+    )
+    featured["debt_utilization_interaction"] = debt_to_income * credit_utilization
+    featured["payment_credit_interaction"] = late_payment_months * credit_utilization
+    return featured
+
+
+def build_stateless_features(
+    df: pd.DataFrame,
+    *,
+    reference_date: str | pd.Timestamp,
+    age_bins: Sequence[float],
+    income_bins: Sequence[float],
+    credit_risk_experiment_enabled: bool = False,
+) -> pd.DataFrame:
+    """Apply every row-local feature transformation used by train and inference."""
+    featured = add_date_features(df, reference_date)
+    featured = add_ratio_features(featured)
+    featured = add_credit_risk_experiment_features(
+        featured, enabled=credit_risk_experiment_enabled
+    )
+    return add_bins(featured, age_bins, income_bins)
+
+
 def _bin_column(values: pd.Series, bins: Sequence[float]) -> pd.Series:
     """Create a string categorical interval feature using configured bin boundaries."""
     if len(bins) < 2:

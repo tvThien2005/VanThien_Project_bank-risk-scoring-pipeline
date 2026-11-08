@@ -14,6 +14,68 @@ optuna:
   n_trials: 50
   timeout_seconds: 1800
   direction: maximize
+  tune_sample_size: null
+
+lightgbm:
+  objective: multiclass
+  num_class: 4
+  class_weight: balanced
+  n_estimators: 2000
+  learning_rate: 0.05
+  num_leaves: 31
+  max_depth: -1
+  min_child_samples: 40
+  subsample: 0.9
+  # Activate row bagging; without this, LightGBM ignores subsample.
+  subsample_freq: 1
+  colsample_bytree: 0.9
+  reg_alpha: 0.0
+  reg_lambda: 1.0
+  n_jobs: 4
+  deterministic: true
+  force_col_wise: true
+  device_type: cpu
+  verbosity: -1
+  early_stopping_rounds: 100
+
+xgboost:
+  objective: multi:softprob
+  num_class: 4
+  n_estimators: 2000
+  learning_rate: 0.05
+  max_depth: 6
+  min_child_weight: 1.0
+  subsample: 0.9
+  colsample_bytree: 0.9
+  reg_alpha: 0.0
+  reg_lambda: 1.0
+  gamma: 0.0
+  tree_method: hist
+  # Change to cuda on Kaggle after confirming `import xgboost` detects its T4.
+  device: cpu
+  n_jobs: 4
+  eval_metric: mlogloss
+  early_stopping_rounds: 100
+
+search_space:
+  num_leaves: [16, 128]
+  max_depth: [-1, 12]
+  min_child_samples: [20, 160]
+  learning_rate: [0.01, 0.15]
+  subsample: [0.7, 1.0]
+  colsample_bytree: [0.7, 1.0]
+  reg_alpha: [0.000001, 10.0]
+  reg_lambda: [0.000001, 10.0]
+
+xgboost_search_space:
+  max_depth: [2, 10]
+  min_child_weight: [1.0, 20.0]
+  learning_rate: [0.01, 0.15]
+  subsample: [0.7, 1.0]
+  colsample_bytree: [0.7, 1.0]
+  reg_alpha: [0.000001, 10.0]
+  reg_lambda: [0.000001, 10.0]
+  gamma: [0.0, 5.0]
 
 mlflow:
   tracking_uri: mlruns
@@ -22,3 +84,15 @@ mlflow:
 reports:
   dummy: reports/credit_baseline_dummy.html
   logistic_regression: reports/credit_baseline_logistic_regression.html
+  lightgbm: reports/credit_lightgbm_validation.html
+  xgboost: reports/credit_xgboost_validation.html
+  segments: reports/credit_lightgbm_segments.html
+  xgboost_segments: reports/credit_xgboost_segments.html
+
+bundle:
+  version: v1.0.0
+  directory: models/credit_risk/v1.0.0
+
+xgboost_bundle:
+  version: v1.0.0
+  directory: models/credit_risk/xgboost/v1.0.0

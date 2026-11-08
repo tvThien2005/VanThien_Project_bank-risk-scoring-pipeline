@@ -11,6 +11,36 @@ optuna:
   n_trials: 50
   timeout_seconds: 1800
   direction: minimize
+  tune_sample_size: null
+
+lightgbm:
+  objective: huber
+  alpha: 0.9
+  n_estimators: 2000
+  learning_rate: 0.05
+  num_leaves: 31
+  max_depth: -1
+  min_child_samples: 40
+  subsample: 0.9
+  colsample_bytree: 0.9
+  reg_alpha: 0.0
+  reg_lambda: 1.0
+  n_jobs: 4
+  deterministic: true
+  force_col_wise: true
+  device_type: cpu
+  verbosity: -1
+  early_stopping_rounds: 100
+
+search_space:
+  num_leaves: [16, 128]
+  max_depth: [-1, 12]
+  min_child_samples: [20, 160]
+  learning_rate: [0.01, 0.15]
+  subsample: [0.7, 1.0]
+  colsample_bytree: [0.7, 1.0]
+  reg_alpha: [0.000001, 10.0]
+  reg_lambda: [0.000001, 10.0]
 
 evaluation:
   top_k: 0.05
@@ -22,3 +52,9 @@ mlflow:
 reports:
   dummy: reports/fraud_baseline_dummy.html
   ridge: reports/fraud_baseline_ridge.html
+  lightgbm: reports/fraud_lightgbm_validation.html
+  segments: reports/fraud_lightgbm_segments.html
+
+bundle:
+  version: v1.0.0
+  directory: models/fraud_risk/v1.0.0
