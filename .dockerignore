@@ -1,0 +1,10 @@
+/data/
+/models/
+/mlruns/
+/reports/
+/notebooks/
+/tests/
+/.git/
+/.venv/
+__pycache__/
+.pytest_cache/

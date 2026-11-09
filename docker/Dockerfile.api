@@ -1,0 +1,24 @@
+FROM python:3.13-slim AS builder
+
+WORKDIR /build
+COPY requirements.txt .
+RUN python -m pip install --upgrade pip \
+    && python -m pip wheel --wheel-dir /wheels -r requirements.txt
+
+FROM python:3.13-slim AS runtime
+
+WORKDIR /app
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+COPY requirements.txt .
+COPY --from=builder /wheels /wheels
+RUN python -m pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt \
+    && rm -rf /wheels
+COPY src ./src
+COPY api ./api
+COPY configs ./configs
+
+ENV MODEL_DIR=/app/models
+EXPOSE 8000
+CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000"]

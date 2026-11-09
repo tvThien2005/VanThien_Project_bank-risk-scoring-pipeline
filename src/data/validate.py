@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from math import isinf
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import yaml
 
+from src.data.validity_rules import COLUMN_RANGES, CUSTOMER_ID_PATTERN
 from src.utils.logger import get_logger
 
 LOGGER = get_logger(__name__)
@@ -29,7 +31,40 @@ def load_data_quality_config(path: str | Path) -> dict[str, Any]:
     names: set[str] = set()
     for rule in config["rules"]:
         _validate_rule_definition(rule, names)
+    _assert_shared_validity_rules(config)
     return config
+
+
+def _assert_shared_validity_rules(config: Mapping[str, Any]) -> None:
+    """Fail fast when YAML entry-error rules drift from the shared API constraints."""
+    rules = config["rules"]
+    all_range_rules = {
+        str(rule["column"]): rule
+        for rule in rules
+        if isinstance(rule, Mapping) and rule["rule"] == "in_range" and rule["action"] == "to_nan"
+    }
+    range_rules = {column: rule for column, rule in all_range_rules.items() if column in COLUMN_RANGES}
+    if set(range_rules) != set(COLUMN_RANGES):
+        raise ValueError("data-quality numeric entry rules must match COLUMN_RANGES.")
+    unsupported = set(all_range_rules) - set(COLUMN_RANGES) - {"credit_risk"}
+    if unsupported:
+        raise ValueError(f"Unexpected numeric entry rules outside shared constraints: {unsupported}")
+    for column, (lower, upper) in COLUMN_RANGES.items():
+        rule = range_rules[column]
+        if rule.get("min") != lower:
+            raise ValueError(f"Range minimum for {column} differs from COLUMN_RANGES.")
+        has_maximum = "max" in rule
+        if isinf(upper) and has_maximum:
+            raise ValueError(f"Range maximum for {column} differs from COLUMN_RANGES.")
+        if not isinf(upper) and rule.get("max") != upper:
+            raise ValueError(f"Range maximum for {column} differs from COLUMN_RANGES.")
+    id_rules = [
+        rule
+        for rule in rules
+        if isinstance(rule, Mapping) and rule["column"] == "customer_id" and rule["rule"] == "regex"
+    ]
+    if len(id_rules) != 1 or id_rules[0].get("pattern") != CUSTOMER_ID_PATTERN:
+        raise ValueError("customer_id regex must match CUSTOMER_ID_PATTERN.")
 
 
 def _validate_rule_definition(rule: Any, names: set[str] | None = None) -> None:

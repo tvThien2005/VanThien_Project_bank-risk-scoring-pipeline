@@ -1,0 +1,12 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - "8000:8000"
+    environment:
+      MODEL_DIR: /app/models
+      MODEL_VERSION: v1.0.0
+    volumes:
+      - ../models:/app/models:ro
