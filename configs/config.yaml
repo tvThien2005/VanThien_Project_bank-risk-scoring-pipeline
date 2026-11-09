@@ -68,7 +68,8 @@ inference:
   model_version: v1.0.0
 
 eda:
-  sample_size: 50000
+  # null analyzes every raw row; set an integer to use a reproducible sample instead.
+  sample_size: null
   report_path: reports/eda_report.html
 
 targets:

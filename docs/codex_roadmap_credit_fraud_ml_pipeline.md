@@ -316,7 +316,7 @@ Không dùng k-fold. Huấn luyện trên **train**, chọn tham số và early 
 
 ### File cần viết
 
-- `README.md` đầy đủ: business context, dataset (nói rõ synthetic), bảng metric (lấy số từ `metrics.json`), sơ đồ pipeline, cách chạy, bài học, hạn chế. Ghi rõ cách chia 70/15/15 và vai trò của train/valid/test.
+- `README.md` đầy đủ: business context, dataset (nói rõ synthetic),các insight rút ra được sau khi EDA, bảng metric (lấy số từ `metrics.json`), sơ đồ pipeline, cách chạy, bài học, hạn chế. Ghi rõ cách chia 70/15/15 và vai trò của train/valid/test.
 - `docs/model_card_credit.md`, `docs/model_card_fraud.md`: mục đích, dữ liệu huấn luyện, metric, fairness, hạn chế, **ghi chú dữ liệu synthetic**.
 - Dọn repo: xóa thư mục rỗng, file không dùng.
 

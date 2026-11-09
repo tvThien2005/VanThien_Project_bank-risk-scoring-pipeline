@@ -1,5 +1,6 @@
 # Generated project artifacts (anchored to the repository root)
 /data/
+/docs/codex_roadmap_credit_fraud_ml_pipeline.md
 /models/
 /mlruns/
 /mlflow.db
