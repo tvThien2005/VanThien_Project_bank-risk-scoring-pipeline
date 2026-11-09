@@ -125,8 +125,9 @@ def run_training(
     smoke_tune_size: int | None = None,
     smoke_trials: int | None = None,
     smoke_timeout_seconds: int | None = None,
+    prepare_features: bool = True,
 ) -> dict[str, dict[str, Any]]:
-    """Tune main models on train/valid and optionally evaluate the held-out test once."""
+    """Build features, tune main models, and optionally evaluate held-out test once."""
     project = config.get("project")
     features = config.get("features")
     model_paths = config.get("models")
@@ -159,6 +160,11 @@ def run_training(
             optuna_settings["n_trials"] = smoke_trials
         if smoke_timeout_seconds is not None:
             optuna_settings["timeout_seconds"] = smoke_timeout_seconds
+
+    if prepare_features:
+        from scripts.run_feature_engineering import run_feature_engineering
+
+        run_feature_engineering(config)
 
     output_dir = Path(str(features["output_dir"]))
     X_train = read_parquet_safe(output_dir / "X_train.parquet")

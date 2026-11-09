@@ -19,6 +19,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--smoke", action="store_true", help="Use small train/tuning samples and write models under smoke/."
     )
+    parser.add_argument(
+        "--skip-feature-engineering",
+        action="store_true",
+        help="Reuse existing data/features artifacts instead of rebuilding them from raw data.",
+    )
     return parser.parse_args()
 
 
@@ -35,6 +40,7 @@ def main() -> None:
         smoke_tune_size=5_000 if arguments.smoke else None,
         smoke_trials=2 if arguments.smoke else None,
         smoke_timeout_seconds=120 if arguments.smoke else None,
+        prepare_features=not arguments.skip_feature_engineering,
     )
     LOGGER.info("Main-model training result: %s", result)
 

@@ -88,9 +88,8 @@ def _write_split_artifacts(
     )
 
 
-def main() -> None:
-    """Fit preprocessing on train only and write all configured feature artifacts."""
-    config = load_config()
+def run_feature_engineering(config: Mapping[str, Any]) -> dict[str, int]:
+    """Build split feature artifacts from raw data, fitting state only on train."""
     project = config.get("project")
     targets = config.get("targets")
     if not isinstance(project, Mapping) or "seed" not in project:
@@ -114,6 +113,7 @@ def main() -> None:
     preprocessor = fit_preprocessor(build_preprocessor(config), featured_splits["train"])
     save_preprocessor(preprocessor, str(settings["preprocessor_path"]))
     output_dir = Path(str(settings["output_dir"]))
+    row_counts: dict[str, int] = {}
     for name in SPLIT_NAMES:
         transformed = transform_features(preprocessor, featured_splits[name])
         _write_split_artifacts(transformed, splits[name], name, output_dir, targets)
@@ -125,6 +125,13 @@ def main() -> None:
             )
             write_parquet_atomic(diagnostics, str(settings["train_target_correlation_path"]))
         LOGGER.info("Wrote %d transformed %s rows", len(transformed), name)
+        row_counts[name] = len(transformed)
+    return row_counts
+
+
+def main() -> None:
+    """Fit preprocessing on train only and write all configured feature artifacts."""
+    run_feature_engineering(load_config())
 
 
 if __name__ == "__main__":

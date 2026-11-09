@@ -62,6 +62,15 @@ governance:
     credit_shap: reports/credit_shap_report.html
     fraud_shap: reports/fraud_shap_report.html
 
+inference:
+  input_path: data/raw/synthetic_finance_20250901.csv
+  output_path: data/predictions/batch_predictions.csv
+  model_version: v1.0.0
+
+eda:
+  sample_size: 50000
+  report_path: reports/eda_report.html
+
 targets:
   classification: credit_risk
   regression: fraud_risk_score
