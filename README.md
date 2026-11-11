@@ -9,6 +9,7 @@ Pipeline dự đoán `credit_risk` và `fraud_risk_score` ở cấp khách hàng
 - [Bài toán và dữ liệu](#bài-toán-và-dữ-liệu)
 - [Insight từ EDA](#insight-từ-eda)
 - [Pipeline và chống rò rỉ](#pipeline-và-chống-rò-rỉ)
+- [Luồng hoạt động và công nghệ](#luồng-hoạt-động-và-công-nghệ)
 - [Kết quả model v1.0.0](#kết-quả-model-v100)
 - [Công bằng, giải thích và giới hạn](#công-bằng-giải-thích-và-giới-hạn)
 - [Cài đặt và chạy](#cài-đặt-và-chạy)
@@ -67,6 +68,49 @@ Raw CSV
 - **Test 15%**: chỉ đánh giá một lần sau khi chốt; script từ chối chạy lại nếu không có `--force`.
 - Không dùng `customer_id`, target, hay cột ngày gốc làm feature. Feature ngày/tỷ lệ tính theo từng dòng; imputer, encoder, scaler và danh sách cột chỉ fit trên train.
 - Cả hai task dùng cùng split customer ID để so sánh nhất quán.
+
+## Luồng hoạt động và công nghệ
+
+```text
+CSV raw
+  → Pandas: schema, kiểu dữ liệu và data-quality rules
+  → Pandas/PyArrow: dataset đã clean và feature artifact dạng Parquet
+  → scikit-learn: split, preprocessing fit trên train
+  → LightGBM + Optuna: tune và train credit/fraud models
+  → MLflow + SHAP + Fairlearn: tracking, giải thích và governance
+  → model bundle (LightGBM + Joblib + JSON/YAML)
+  → Pandas batch inference hoặc FastAPI/Uvicorn API
+  → Docker Compose: API container + models mount read-only
+```
+
+| Chặng | Công nghệ | Hoạt động |
+| --- | --- | --- |
+| 1. Ingestion | Python 3.13, Pandas | Đọc CSV raw, kiểm tra đúng schema 23 cột, ép kiểu số/ngày/category và lưu bản trung gian. |
+| 2. Data quality | Pandas, PyYAML | Đọc rules YAML; entry error được đổi thành missing, còn outlier và missingness được giữ lại qua các cờ feature. |
+| 3. Chia dữ liệu | scikit-learn, NumPy | Tạo hoặc nạp lại split 70/15/15 stratify theo `credit_risk`; lưu customer ID để hai task dùng cùng tập dữ liệu. |
+| 4. Features | Pandas | Tạo recency theo ngày, các tỷ lệ tài chính, age/income bins và các feature cờ chất lượng. |
+| 5. Preprocessing | scikit-learn `ColumnTransformer` | Chỉ fit trên train: log transform theo skew, median imputation, scaling, ordinal encoding và one-hot encoding. |
+| 6. Train/tune | LightGBM, Optuna | Train LightGBM multiclass cho credit và Huber regression cho fraud; Optuna chọn hyperparameter theo validation và early stopping. |
+| 7. Đánh giá/governance | scikit-learn, SciPy, Fairlearn, SHAP | Tính QWK/F1/RMSE/MAE/top-k, chọn policy trên validation, kiểm tra fairness và tạo SHAP report. |
+| 8. Tracking/artifact | MLflow, PyArrow, Joblib, JSON/YAML | Log experiment cục bộ; lưu model, preprocessor, feature list, metrics và inference metadata thành bundle versioned. |
+| 9. Serving | Pandas, FastAPI, Pydantic, Uvicorn | Batch inference hoặc REST API; input API được validate trước khi đi qua cùng cleaning/feature/preprocessing flow. |
+| 10. Container | Docker, Docker Compose | Multi-stage image `python:3.13-slim`; container chỉ chứa runtime/code, bundle được mount từ `models/` ở chế độ read-only. |
+
+### Luồng inference sau khi đã train
+
+Batch và API đều nhận **dữ liệu raw**, không nhận feature matrix đã biến đổi. Bundle đã lưu chứa preprocessor, feature list và metadata của data-quality/feature settings, nên inference tái tạo đúng chuỗi transform đã dùng khi train:
+
+```text
+Raw customer record
+  → validate input (API) / kiểm tra customer_id (batch)
+  → cleaning theo rules đã đóng gói
+  → stateless feature engineering
+  → preprocessor đã fit trên train
+  → chọn đúng feature list của bundle
+  → credit class + probabilities và/hoặc fraud score
+```
+
+Docker không train model trong lúc build. Trước khi chạy Compose, cần có các bundle `models/credit_risk/v1.0.0` và `models/fraud_risk/v1.0.0` trên máy host để mount vào `/app/models`; nếu không, `GET /health` trả `model_not_loaded`.
 
 ## Kết quả model v1.0.0
 
